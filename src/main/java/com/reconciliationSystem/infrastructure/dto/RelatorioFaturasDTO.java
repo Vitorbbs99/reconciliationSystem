@@ -11,6 +11,7 @@ public record RelatorioFaturasDTO (
   FaturaStatus status,
   BigDecimal valorPago,
   String motivoInconsistencia,
+  LocalDateTime dataVencimento,
   LocalDateTime dataConciliacao
 ) {
 }

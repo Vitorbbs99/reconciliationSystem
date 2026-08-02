@@ -29,7 +29,7 @@ O desenho do sistema foi planejado para isolar a complexidade do negócio das fe
 
 ### Diagrama de classes UML
 
-![Diagrama UML](diagramas/diagrama_faturas.jpg)
+![Diagrama UML](diagramas/diagrama_faturav2.jpg)
 
 ---
 

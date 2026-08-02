@@ -24,6 +24,7 @@ public class ListaRelatorioService {
         relatorio.getStatus(),
         relatorio.getValorPago(),
         relatorio.getMotivoInconsistencia(),
+        relatorio.getDataVencimento(),
         relatorio.getDataConciliacao()
       ))
       .toList();

@@ -43,6 +43,9 @@ public class Fatura {
   @Column(name = "data_criacao", nullable = false, updatable = false)
   private LocalDateTime dataCriacao;
 
+  @Column(name = "data_vencimento")
+  private LocalDateTime dataVencimento;
+
   @Column(name = "data_conciliacao")
   private LocalDateTime dataConciliacao;
 
