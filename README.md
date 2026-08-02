@@ -146,6 +146,7 @@ Automação via **GitHub Actions** integrada ao **AWS CodeDeploy**.
     "status": "CONCILIADO",
     "valorPago": 150.00,
     "motivoInconsistencia": null,
+    "dataVencimento": "2026-08-03T19:06:10.766968",
     "dataConciliacao": "2026-07-31T23:48:43.714Z"
   },
   {
@@ -154,6 +155,7 @@ Automação via **GitHub Actions** integrada ao **AWS CodeDeploy**.
     "status": "INCONSISTENTE",
     "valorPago": 100.00,
     "motivoInconsistencia": "Valor pago R$ 150.00 é divergente do valor esperado R$ 100.00",
+    "dataVencimento": "2026-08-03T19:06:10.766968",
     "dataConciliacao": "2026-07-31T23:49:10.120Z"
   },
   {
@@ -162,6 +164,7 @@ Automação via **GitHub Actions** integrada ao **AWS CodeDeploy**.
     "status": "PENDENTE",
     "valorPago": 0.0,
     "motivoInconsistencia": null,
+    "dataVencimento": "2026-08-03T19:06:10.766968",
     "dataConciliacao": null
   }
 ]
