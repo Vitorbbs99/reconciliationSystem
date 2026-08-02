@@ -1,0 +1,82 @@
+services:
+  postgres-db:
+    image: postgres:16
+    container_name: reconciliationSystem-postgres
+    environment:
+      - POSTGRES_DB=${DB_NAME}
+      - POSTGRES_USER=${DB_USER}
+      - POSTGRES_PASSWORD=${DB_PASSWORD}
+    ports:
+      - "${DB_PORT_EXTERNAL}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER} -d ${DB_NAME}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - reconciliation_postgres_data:/var/lib/postgresql/data
+    networks:
+      - reconciliation-net
+
+  localstack:
+    image: localstack/localstack:3.7.2
+    hostname: localstack
+    container_name: localstack
+    ports:
+      - "4566:4566"
+      - "4510-4559:4510-4559"
+    environment:
+      - SERVICES=sqs
+      - AWS_DEFAULT_REGION=sa-east-1
+      - AWS_ACCESS_KEY_ID=test
+      - AWS_SECRET_ACCESS_KEY=test
+      - LOCALSTACK_HOST=localhost
+      - SQS_ENDPOINT_STRATEGY=path
+    volumes:
+      # Executa o script de criação da fila
+      - ./scripts/init-sqs.sh:/etc/localstack/init/ready.d/init-sqs.sh
+    healthcheck:
+      test: [ "CMD", "curl", "-f", "http://localhost:4566/_localstack/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 15s
+    networks:
+      - reconciliation-net
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: reconciliationSystem-api
+    ports:
+      - "8080:8080"
+    environment:
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://postgres-db:5432/${DB_NAME}
+      - SPRING_DATASOURCE_USERNAME=${DB_USER}
+      - SPRING_DATASOURCE_PASSWORD=${DB_PASSWORD}
+      # Configurações do SQS para o Spring ler de dentro do Docker
+      - AWS_SQS_ENDPOINT=http://localstack:4566
+      - AWS_REGION=sa-east-1
+      - QUEUE_NAME=pix-transactions-queue
+    depends_on:
+      postgres-db:
+        condition: service_healthy
+    networks:
+      - reconciliation-net
+
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    container_name: prometheus
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    networks:
+      - reconciliation-net
+
+volumes:
+  reconciliation_postgres_data:
+
+networks:
+  reconciliation-net:

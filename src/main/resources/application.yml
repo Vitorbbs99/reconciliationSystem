@@ -1,0 +1,69 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:${DB_PORT_EXTERNAL:5433}/${DB_NAME:reconciliation_db}
+    username: ${DB_USER:reconciliation}
+    password: ${DB_PASSWORD:123}
+    driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: 50
+      minimum-idle: 10
+      idle-timeout: 30000
+      connection-timeout: 20000
+
+  jpa:
+    database-platform: org.hibernate.dialect.PostgreSQLDialect
+    hibernate:
+      ddl-auto: update
+      jdbc:
+        batch_size: 50 # Agrupa em lotes
+        order_inserts: true
+        order_updates: true
+    show-sql: false
+    defer-datasource-initialization: true # Espera o Hibernate criar as tabelas antes de rodar o data.sql
+    properties:
+      hibernate:
+        format_sql: false
+
+  sql:
+    init:
+      mode: always # Executar o src/main/resources/data.sql
+
+  springdoc:
+    swagger-ui:
+      path: /swagger-ui.html
+      operations-sorter: method
+    api-docs:
+      path: /v3/api-docs
+
+aws:
+  region: ${AWS_REGION:sa-east-1}
+  sqs:
+    endpoint: ${AWS_SQS_ENDPOINT:http://localhost:4566/queue/sa-east-1/000000000000/pix-transactions-queue}
+    queue-name: ${QUEUE_NAME:pix-transactions-queue}
+
+io:
+  awspring:
+    cloud:
+      sqs:
+        listener:
+          container:
+            # Alta volumetria: Mínimo e máximo de threads (Aumente se necessário)
+            concurrency: 20-50
+            max-concurrent-messages: 500
+            max-messages-per-poll: 10
+
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+
+server:
+  port: 8080
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health, prometheus
+  metrics:
+    tags:
+      application: reconciliationSystem
