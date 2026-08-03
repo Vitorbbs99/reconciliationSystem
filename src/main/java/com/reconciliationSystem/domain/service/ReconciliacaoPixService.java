@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.stereotype.Service;
 
+import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.Optional;
 
@@ -23,51 +24,54 @@ public class ReconciliacaoPixService {
   private static final Logger log = LoggerFactory.getLogger(ReconciliacaoPixService.class);
   private final FaturaRepository faturaRepository;
 
-  @Transactional
-  public void processarReconciliacao(TransacaoPixMessageDTO transacaoPixMessageDTO) {
+  public void processarReconciliacao(TransacaoPixMessageDTO dto) {
+    // Busca
+    Fatura fatura = faturaRepository.findByTxidOtimizado(dto.txid())
+      .orElseThrow(() -> new TransacaoNaoEncontradaException(dto.txid()));
 
-    log.debug("Iniciando conciliação da transação TXID: {}", transacaoPixMessageDTO.txid());
-
-    // Busca pelo indíce
-    Optional<Fatura> faturaOpt = faturaRepository.findByTxidOtimizado(transacaoPixMessageDTO.txid());
-
-    // Se não existir uma fatura, lança um exceção
-    if (faturaOpt.isEmpty()) {
-      log.warn("Transação Pix não conciliada. TXID não encontrado no sistema: {}", transacaoPixMessageDTO.txid());
-      throw new TransacaoNaoEncontradaException(transacaoPixMessageDTO.txid());
-    }
-
-    // Pega a entidade
-    Fatura fatura = faturaOpt.get();
-
-    //Verifica se a fatura já está conciliada
+    //  Return se já processado
     if (FaturaStatus.CONCILIADO.equals(fatura.getStatus())) {
-      log.info("Transação com TXID: {} já se encontra conciliada. Ignorando reprocessamento.", transacaoPixMessageDTO.txid());
+      log.info("Transação com TXID: {} já se encontra conciliada. Ignorando reprocessamento.", dto.txid());
       return;
     }
 
-    // Atribui novos valores a entidade FATURA
-    fatura.setValorPago(transacaoPixMessageDTO.valorPago());
+    // Aplica as regras
+    atualizarDadosConciliacao(fatura, dto.valorPago());
+
+    // Salva a fatura atualizada
+    faturaRepository.save(fatura);
+  }
+
+  // Atualiza os dados da fatura
+  private void atualizarDadosConciliacao(Fatura fatura, BigDecimal valorPago) {
+    fatura.setValorPago(valorPago);
     fatura.setDataConciliacao(LocalDateTime.now());
 
-    // Verifica se o valor pago pelo cliente é igual a fatura existente
-    if (fatura.getValorEsperado().compareTo(transacaoPixMessageDTO.valorPago()) == 0) {
-      fatura.setStatus(FaturaStatus.CONCILIADO);
-      fatura.setMotivoInconsistencia(null);
-      log.info("Sucesso: Fatura ID {} conciliada para o TXID {}", transacaoPixMessageDTO.txid(), transacaoPixMessageDTO.txid());
+    boolean eValorValido = fatura.getValorEsperado().compareTo(valorPago) == 0;
+
+    if (eValorValido) {
+      definirComoConciliado(fatura);
     } else {
-      fatura.setStatus(FaturaStatus.INCONSISTENTE);
-
-      String motivo = String.format("Valor pago (R$ %s) é divergente do valor esperado (R$ %s)",
-        transacaoPixMessageDTO.valorPago(), fatura.getValorEsperado());
-
-      fatura.setMotivoInconsistencia(motivo);
-
-      log.warn("Inconsistência detectada na Fatura ID {}: {}", fatura.getId(), motivo);
+      definirComoInconsistente(fatura, valorPago);
     }
+  }
 
-    // Salva com novos valores
-    faturaRepository.save(fatura);
+  // Atualiza como conciliado
+  private void definirComoConciliado(Fatura fatura) {
+    fatura.setStatus(FaturaStatus.CONCILIADO);
+    fatura.setMotivoInconsistencia(null);
+    log.info("Sucesso: Fatura ID {} conciliada para o TXID {}", fatura.getId(), fatura.getTxid());
+  }
+
+  // Lança motivo de inconsistência
+  private void definirComoInconsistente(Fatura fatura, BigDecimal valorPago) {
+    fatura.setStatus(FaturaStatus.INCONSISTENTE);
+
+    String motivo = String.format("Valor pago (R$ %s) é divergente do valor esperado (R$ %s)",
+      valorPago, fatura.getValorEsperado());
+
+    fatura.setMotivoInconsistencia(motivo);
+    log.warn("Inconsistência detectada na Fatura ID {}: {}", fatura.getId(), motivo);
   }
 
 }
