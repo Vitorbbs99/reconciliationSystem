@@ -173,5 +173,8 @@ Automação via **GitHub Actions** integrada ao **AWS CodeDeploy**.
 ]
 ```
 ## Melhorias
+
+* **Cache Redis**: No saldo para reduzir latência em leitura pesada.
+* **Autenticação/autorização na API**: Proteger endpoints em produção.
 * **Multi-stage Build no Dockerfile**: Otimizar a imagem Docker para compilar o código.
 * **Grafana**: Consolidar as métricas do Prometheus.
