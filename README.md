@@ -43,6 +43,8 @@ Para suportar a carga de 2.000 m/s sem gargalos ou degradação do ambiente:
 * **Retries:** Mecanismo automático de até 3 tentativas (`max-attempts: 3`) antes de descartar a mensagem para a DLQ.
 * **Backoff/Jitter:** Em caso de falhas temporárias (como instabilidade no banco), o sistema aguarda um tempo progressivo (VisibilityTimeout: 30 adicionado na fila) e com ruído aleatório (Jitter) para reprocessar, evitando o efeito de "manada".
 * **Connection Batch:** Processamento em lote (50) para enviá-las juntas ao servidor em uma única comunicação de rede.
+* **Circuit Breaker:** O circuito "abre" e interrompe novas requisições imediatas, evitando falhas em cascata e dando tempo para o sistema se recuperar.
+* **Idempotência:** Checagem prévia (Check-Then-Act) aplicada na regra de negócio caso haja duplicidade.
 
 ---
 
@@ -75,12 +77,13 @@ Para suportar a carga de 2.000 m/s sem gargalos ou degradação do ambiente:
 
 ### SOLID
 * **S (Single Responsibility):** Classes com responsabilidade única (ex: SQS Consumer apenas consome, Service apenas aplica regra de negócio).
-* **O (Open/Closed):** Arquitetura baseada em microsserviços permite estender o ecossistema adicionando novos serviços sem modificar o código existente.
+* **O (Open/Closed):** O ecossistema está aberto para extensão e fechada para modificação.
 * **L (Liskov Substitution):** Herança e polimorfismo do Java, garantindo que as implementações de interfaces (como contratos de repositórios).
 * **I (Interface Segregation):** Interfaces de domínio enxutas.
 * **D (Dependency Inversion):** interface que serve ao seu modelo de domínio (Ex: public interface FaturaRepository extends JpaRepository<Fatura, Long>).
 
 ### Design Patterns
+* **Strategy:** Utilizado para alternar dinamicamente regras de validação.
 * **Builder:** Criação de entidades e DTOs de forma imutável e legível.
 * **Singleton:** Escopo padrão dos Beans gerenciados pelo Spring Framework (Services, Repositories).
 * **Observer:** Notificar os eventos no sistema (Fila SQS).

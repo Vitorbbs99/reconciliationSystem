@@ -52,6 +52,27 @@ io:
             max-concurrent-messages: 500
             max-messages-per-poll: 10
 
+resilience4j:
+  circuitbreaker:
+    instances:
+      sqsListenerCircuitBreaker:
+        # Tamanho da janela deslizante para analisar a taxa de erro (ex: últimas 50 chamadas)
+        sliding-window-size: 50
+        # Mínimo de chamadas necessárias na janela antes de calcular a taxa de falha
+        minimum-number-of-calls: 10
+        # Porcentagem de falhas para ABRIR o circuito (ex: se 50% falhar, abre)
+        failure-rate-threshold: 50
+        # Porcentagem de chamadas lentas para ABRIR o circuito
+        slow-call-rate-threshold: 75
+        # Tempo (ms) limite para considerar uma chamada "lenta"
+        slow-call-duration-threshold: 2000ms
+        # Tempo que o circuito permanece no estado ABERTO antes de ir para MEIO-ABERTO
+        wait-duration-in-open-state: 10000ms
+        # Quantidade de chamadas de teste permitidas no estado MEIO-ABERTO
+        permitted-number-of-calls-in-half-open-state: 5
+        # Transição automática de ABERTO para MEIO-ABERTO após o tempo de espera
+        automatic-transition-from-open-to-half-open-enabled: true
+
 logging:
   level:
     org.hibernate.SQL: DEBUG
