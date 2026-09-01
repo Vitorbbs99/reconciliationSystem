@@ -73,6 +73,18 @@ resilience4j:
         # Transição automática de ABERTO para MEIO-ABERTO após o tempo de espera
         automatic-transition-from-open-to-half-open-enabled: true
 
+  endpoints:
+    web:
+      exposure:
+        include: health, metrics, prometheus
+  metrics:
+    tags:
+      application: conciliacao-pix-service
+    distribution:
+      percentiles-histogram:
+        http.server.requests: true
+        resilience4j.circuitbreaker.calls: true
+
 logging:
   level:
     org.hibernate.SQL: DEBUG
